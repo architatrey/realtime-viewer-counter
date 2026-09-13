@@ -2,6 +2,7 @@ package com.example.realtimeviewercounter.service;
 
 import com.example.realtimeviewercounter.dto.HeartbeatRequest;
 import com.example.realtimeviewercounter.dto.HeartbeatResponse;
+import com.example.realtimeviewercounter.dto.ViewerCountResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Range;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
@@ -42,6 +43,12 @@ public class PresenceService {
                         count,
                         expiresAt
                 ));
+    }
+
+    public Mono<ViewerCountResponse> getViewerCount(String resourceId) {
+        String key = KEY_PREFIX + resourceId;
+        return countActive(key)
+                .map(count -> new ViewerCountResponse(resourceId, count));
     }
 
     private Mono<Long> countActive(String key) {
