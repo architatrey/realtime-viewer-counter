@@ -8,6 +8,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Range;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
@@ -16,6 +19,7 @@ import java.time.Instant;
 @Service
 public class PresenceService {
 
+    private static final Logger log = LoggerFactory.getLogger(PresenceService.class);
     private static final String KEY_PREFIX = "resource_tracker:";
     private static final Duration KEY_TTL = Duration.ofHours(24);
 
@@ -56,5 +60,25 @@ public class PresenceService {
         double now = Instant.now().toEpochMilli();
         return redisTemplate.opsForZSet()
                 .count(key, Range.from(Range.Bound.inclusive(now)).to(Range.Bound.unbounded()));
+    }
+
+    @Scheduled(fixedRateString = "${presence.cleanup.rate-ms:900000}")
+    public void cleanupExpiredSessions() {
+        double now = Instant.now().toEpochMilli();
+        log.debug("Running scheduled cleanup for expired heartbeats");
+
+        redisTemplate.keys(KEY_PREFIX + "*")
+                .flatMap(key -> redisTemplate.opsForZSet()
+                        .removeRangeByScore(key, Range.from(Range.Bound.inclusive(0.0)).to(Range.Bound.exclusive(now)))
+                        .doOnNext(removedCount -> {
+                            if (removedCount > 0) {
+                                log.info("Removed {} expired sessions for key {}", removedCount, key);
+                            }
+                        }))
+                .subscribe(
+                        null,
+                        error -> log.error("Error during scheduled cleanup", error),
+                        () -> log.debug("Scheduled cleanup finished")
+                );
     }
 }
