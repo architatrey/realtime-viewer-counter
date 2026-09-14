@@ -35,17 +35,3 @@ k6 run -e LOAD_LEVEL=medium load-test-k6.js
 # High
 k6 run -e LOAD_LEVEL=high load-test-k6.js
 ```
-
-### Option 2: Node.js
-If you prefer not to install extra tooling, use the vanilla Node.js script. Pass the profile as an argument:
-
-```bash
-# Default (low)
-node load-test-node.js
-
-# Medium
-node load-test-node.js medium
-
-# High
-node load-test-node.js high
-```
