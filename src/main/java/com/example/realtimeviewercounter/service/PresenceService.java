@@ -3,6 +3,7 @@ package com.example.realtimeviewercounter.service;
 import com.example.realtimeviewercounter.dto.HeartbeatRequest;
 import com.example.realtimeviewercounter.dto.HeartbeatResponse;
 import com.example.realtimeviewercounter.dto.ViewerCountResponse;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Range;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
@@ -22,7 +23,7 @@ public class PresenceService {
     private final Duration sessionTtl;
 
     public PresenceService(
-            ReactiveRedisTemplate<String, String> redisTemplate,
+            @Qualifier("reactiveRedisTemplate") ReactiveRedisTemplate<String, String> redisTemplate,
             @Value("${presence.session.ttl-seconds:30}") long sessionTtlSeconds) {
         this.redisTemplate = redisTemplate;
         this.sessionTtl = Duration.ofSeconds(sessionTtlSeconds);
